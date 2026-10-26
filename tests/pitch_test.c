@@ -56,8 +56,9 @@ int main(void)
     if (!d || !c.px) return 1;
 
     static const struct { double hz; const char *note; } strings[] = {
-        { 41.20, "E1" }, { 55.00, "A1" }, { 73.42, "D2" }, { 98.00, "G2" },               /* bass */
+        { 30.87, "B0" }, { 41.20, "E1" }, { 55.00, "A1" }, { 73.42, "D2" }, { 98.00, "G2" },               /* 5- and 4-string bass */
         { 82.41, "E2" }, { 110.00, "A2" }, { 146.83, "D3" }, { 196.00, "G3" }, { 246.94, "B3" }, { 329.63, "E4" },
+        { 1318.51, "E6" },                                                                    /* 24th fret, high E */
         { 440.00, "A4" }, { 880.00, "A5" }, { 1046.50, "C6" },
     };
     for (size_t i = 0; i < sizeof strings / sizeof *strings; i++) check(d, &c, strings[i].hz, 440, strings[i].note, 0);
