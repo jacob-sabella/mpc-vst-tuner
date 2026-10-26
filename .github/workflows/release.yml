@@ -28,6 +28,6 @@ jobs:
       vst_dir: vst
       build: vst/build.sh
       host_test: tests/run.sh
-      about: "A chromatic tuner insert that draws its needle or strobe straight onto the MPC's screen."
+      about: "A chromatic tuner insert that draws its needle straight onto the MPC's screen."
       license: MIT
       dry_run: ${{ inputs.dry_run }}
