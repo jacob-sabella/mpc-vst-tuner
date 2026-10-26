@@ -1,0 +1,14 @@
+{
+  "name": "Tuner",
+  "vendor": "jacob-sabella",
+  "uid": "Tunr",
+  "version": 1,
+  "so": "tuner.so",
+  "params": "params.json",
+  "layout": "layout.conf",
+  "art": "html",
+  "effect": true,
+  "targets": ["armv7", "aarch64"],
+  "defines": {"PARAM_TEXT_MAX": 64},
+  "build": {"root": "..", "sources": ["src/engine.c", "src/screendraw.c"], "cflags": ["-Isrc"], "libs": ["-lm", "-lpthread"]}
+}
