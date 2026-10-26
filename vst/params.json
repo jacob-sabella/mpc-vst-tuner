@@ -3,7 +3,6 @@
  "params": [
   {"key": "ref", "name": "Ref", "min": 430, "max": 450, "default": 440, "display": "int"},
   {"key": "mute", "name": "Mute", "options": ["off", "on"]},
-  {"key": "view", "name": "View", "options": ["needle", "strobe"]},
   {"key": "status", "name": "Status", "type": "readout", "display": "string"},
   {"key": "target", "name": "Target", "options": ["auto", "screen", "source"]}
  ]

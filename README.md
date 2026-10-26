@@ -10,7 +10,7 @@
 A chromatic tuner for the Akai MPC, in one insert effect.
 
 Put Tuner on the track your guitar, bass or synth comes in on and play a note. It shows the note, how many cents
-sharp or flat you are and the frequency, with a live needle or strobe drawn on the MPC's own touchscreen. It runs on
+sharp or flat you are and the frequency, with a live needle drawn on the MPC's own touchscreen. It runs on
 MPC OS standalone devices (MPC Live, One, X, Key and Force), loaded by MPC's built-in plugin host.
 
 ![The needle view on an MPC Key 37](docs/screenshots/needle.png)
@@ -34,28 +34,20 @@ Put Tuner on a track's insert (channel mixer > EFFECTS) and open it.
 
 | Control | What it does |
 |---|---|
-| VIEW | NEEDLE or STROBE (below) |
 | REF | the pitch of A4, 430 to 450 Hz (440 by default) |
 | MUTE | silences the track while you tune. Tuner still hears it |
 | TARGET | where it draws: AUTO (MPC's own buffer when it finds it, else the screen), SCREEN or SOURCE. Leave it on AUTO |
 
-REF, VIEW and MUTE are on the first three Q-Links.
+REF and MUTE are on the first two Q-Links.
 
-| View | What you see |
-|---|---|
-| NEEDLE | the note, the cents off and the frequency, with a needle over a ±50 cent scale |
-| STROBE | the note and the cents, over four bands that drift left when you're flat and right when you're sharp. In tune, they stand still. The further off you are, the faster they move |
-
-The cents turn cyan within 3 cents, yellow within 10, and pink beyond that. The input level is in the top left
+The screen shows the note, the cents off and the frequency, with a needle over a ±50 cent scale. The cents turn cyan within 3 cents, yellow within 10, and pink beyond that. The input level is in the top left
 corner. Below about -50 dB Tuner treats the input as silence: it keeps the last note dimmed for a second and a half,
 then shows "---".
-
-![The strobe view](docs/screenshots/strobe.png)
 
 ## Good to know
 
 - Tuner follows one note at a time. A chord reads as the period its notes share, usually a low note: the
-  screenshots above are of the Classic House demo's Rhodes chords, read as C1.
+  screenshot above is of the Classic House demo's Rhodes chords, read as C1.
 - It reads from 27 Hz to about 1.4 kHz, from a 5-string bass's low B to the 24th fret of a guitar's high E string.
   Offline, every test note lands within 0.4 cents (`tests/pitch_test.c`, 2026-10-26).
 - The pitch detection runs on the drawing thread, never on the audio thread, and only while Tuner's page is on screen.

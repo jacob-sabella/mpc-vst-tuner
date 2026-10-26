@@ -5,8 +5,8 @@
  * Pitch: YIN (de Cheveigne & Kawahara 2002) on the input decimated 4x to 11025 Hz (covers 27-1378 Hz), then the
  * period refined at 44.1 kHz around what it found, with parabolic interpolation at both stages. A 5-estimate
  * median steadies the note; the needle eases toward the cents.
- * Views: a needle gauge, or a strobe whose bands drift at a speed set by the cents offset. Synthwave palette:
- * a purple sky over a grid floor that scrolls toward the viewer. */
+ * The view: the note, the cents and a needle, in a synthwave palette: a purple sky over a grid floor that scrolls
+ * toward the viewer while a note sounds. */
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,20 +41,19 @@
 #define C_TICK    0x9D7BD8
 #define C_DIM     0x4A3366
 
-enum { VIEW_NEEDLE, VIEW_STROBE };
 static const char *NOTES[12] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
 typedef struct {
     int16_t ring[RING];
     unsigned wpos;
-    int ref, mute, view, target;
+    int ref, mute, target;
     float x[NFULL], xd[NDEC], d[YTMAX + 2];
     float med[NMED];
     int nmed;
     int has, midi;
     float hz, cents, smooth_cents;
     int hold_frames;
-    float strobe_off, grid_phase;
+    float grid_phase;
     uint32_t *bg;                    /* the sky and the floor's fixed lines, column-major like the canvas */
     int bgw, bgh;
 } tuner_t;
@@ -268,48 +267,7 @@ static void draw_needle(tuner_t *d, scr_canvas_t *c, int dim)
     sd_text(c, c->w - 12 - sd_text_width(buf, 2), 12, 2, C_TICK, buf);
 }
 
-/* ---- strobe view ---- */
-
-static void draw_strobe(tuner_t *d, scr_canvas_t *c, int dim)
-{
-    uint32_t cc = dim ? C_DIM : cent_color(d->smooth_cents);
-    char buf[24];
-
-    note_name(d, buf, sizeof buf);
-    glow_text(c, c->w / 2 - sd_text_width(buf, 6) / 2, 10, 6, dim ? C_DIM : C_PINK, dim ? C_SKY_HZN : C_CYAN, buf);
-    snprintf(buf, sizeof buf, "%+d", (int)roundf(d->smooth_cents));
-    glow_text(c, c->w / 2 - sd_text_width(buf, 3) / 2, 62, 3, cc, dim ? C_SKY_HZN : C_PURPLE, buf);
-
-    int sy = 100, sh = horizon(c) - 8 - sy;
-    static const int periods[] = { 32, 48, 64, 96 };
-    static const uint32_t cols[] = { C_PINK, C_MAGENTA, C_PURPLE, C_CYAN };
-    int nb = 4, bh = sh / nb;
-
-    if (!dim) d->strobe_off += d->smooth_cents * 0.3f;
-    if (d->strobe_off > 1e5f || d->strobe_off < -1e5f) d->strobe_off = 0;
-    int off = (int)d->strobe_off;
-    for (int b = 0; b < nb; b++) {
-        int by = sy + b * bh, per = periods[b];
-        uint32_t col = dim ? C_DIM : cols[b];
-        for (int x = 0; x < c->w; x++) {
-            int ph = ((x + off) % per + per) % per;
-            if (ph < per / 2) vspan(c, x, by, by + bh - 5, col);
-        }
-    }
-    vspan(c, c->w / 2, sy - 4, sy + sh, cc);
-    vspan(c, c->w / 2 + 1, sy - 4, sy + sh, cc);
-
-    snprintf(buf, sizeof buf, "A4=%dHZ", d->ref);
-    sd_text(c, c->w - 12 - sd_text_width(buf, 2), 12, 2, C_TICK, buf);
-}
-
 /* ---- main draw callback ---- */
-
-static void draw_view(tuner_t *d, scr_canvas_t *c, int dim)
-{
-    if (d->view == VIEW_NEEDLE) draw_needle(d, c, dim);
-    else draw_strobe(d, c, dim);
-}
 
 static void idle(scr_canvas_t *c, const char *s)
 {
@@ -341,7 +299,7 @@ static int draw(void *owner, scr_canvas_t *c)
         clear(d, c, 0);
         if (d->hold_frames > 0) {
             d->hold_frames--;
-            draw_view(d, c, 1);
+            draw_needle(d, c, 1);
         } else {
             d->has = 0;
             idle(c, "---");
@@ -383,7 +341,7 @@ static int draw(void *owner, scr_canvas_t *c)
     }
 
     clear(d, c, d->has);
-    if (d->has) draw_view(d, c, 0);
+    if (d->has) draw_needle(d, c, 0);
     else idle(c, "---");
     sd_text(c, 12, 12, 2, C_TICK, lbuf);
     return 1;
@@ -416,7 +374,6 @@ static void set_param(void *i, const char *k, const char *v)
     tuner_t *d = i;
     if (!strcmp(k, "ref")) d->ref = atoi(v);
     else if (!strcmp(k, "mute")) d->mute = atoi(v) != 0;
-    else if (!strcmp(k, "view")) { int m = atoi(v); d->view = m < 0 ? 0 : m > VIEW_STROBE ? VIEW_STROBE : m; }
     else if (!strcmp(k, "target")) { int t = atoi(v); d->target = t < 0 ? 0 : t > 2 ? 2 : t; scr_set_target(d->target); }
 }
 
@@ -426,7 +383,6 @@ static int get_param(void *i, const char *k, char *b, int n)
     if (!strcmp(k, "status")) return scr_status(b, n);
     if (!strcmp(k, "ref")) return snprintf(b, n, "%d", d->ref);
     if (!strcmp(k, "mute")) return snprintf(b, n, "%d", d->mute);
-    if (!strcmp(k, "view")) return snprintf(b, n, "%d", d->view);
     if (!strcmp(k, "target")) return snprintf(b, n, "%d", d->target);
     return 0;
 }
