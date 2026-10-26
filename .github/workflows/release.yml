@@ -2,7 +2,7 @@
 # mpc-vst-plugins' reusable workflow (its docs/RELEASING.md, "Releasing from CI"). mpc-vst-plugins is pinned to ONE
 # commit in both places below (and in test.yml): move them together.
 # Run it from the Actions tab or `gh workflow run release.yml -f version=<x.y.z>`, then publish the draft
-# (as a prerelease while the version is 0.x) once it has been tested on a device.
+# (as a prerelease while the version is 0.x) once tested.json has an entry for the version from a device test.
 name: Release
 
 on:
