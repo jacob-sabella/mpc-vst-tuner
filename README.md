@@ -62,7 +62,7 @@ There's no release yet. Once there is, it will be in the
 yourself (below) and install it like any other plugin from
 [mpc-vst-plugins](https://github.com/sd88me/mpc-vst-plugins).
 
-Tested on an MPC Key 37 (Gen1) with MPC OS 3.9.1 (2026-10-26). The Gen2 build (aarch64) compiles and passes the host
+Tested on an MPC Key 37 (Gen1) with MPC OS 3.9.1 (2026-10-26; see `tested.json`). The Gen2 build (aarch64) compiles and passes the host
 test under QEMU but hasn't been on a device.
 
 ## CPU
@@ -76,8 +76,11 @@ thread, not in MPC's audio callback, so this is a share of one CPU core:
 | a note sounding, the page open | 14.3% of a core |
 | another page on screen | almost nothing: a few small reads per frame |
 
-A frame takes 1.2 to 2.7 ms to draw and 1.4 to 5.4 ms to copy into MPC's buffer. On the audio thread Tuner only copies
-each block into a buffer. mpc-vst-plugins' release bench (`tools/bench.sh`) hasn't been run yet.
+A frame takes 1.2 to 2.7 ms to draw and 1.4 to 5.4 ms to copy into MPC's buffer.
+
+On the audio thread Tuner only copies each block into a buffer. The standard release bench (mpc-vst-plugins'
+`tools/bench.sh`, result in `vst/bench.txt`) gives it a **PASS**: 1.0% of the block budget at p99, 1.9% in the worst
+block (2026-10-26). The bench runs with no screen to draw on, so it doesn't count the drawing thread above.
 
 ## How it's built
 
