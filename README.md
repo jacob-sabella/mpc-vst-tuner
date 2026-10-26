@@ -80,7 +80,8 @@ A frame takes 1.2 to 2.7 ms to draw and 1.4 to 5.4 ms to copy into MPC's buffer.
 
 On the audio thread Tuner only copies each block into a buffer. The standard release bench (mpc-vst-plugins'
 `tools/bench.sh`, result in `vst/bench.txt`) gives it a **PASS**: 1.0% of the block budget at p99, 1.9% in the worst
-block (2026-10-26). The bench runs with no screen to draw on, so it doesn't count the drawing thread above.
+block (2026-10-26). Tuner's page isn't on screen during the bench, so its drawing thread stays idle there and the
+figures above are the ones for drawing.
 
 ## How it's built
 
