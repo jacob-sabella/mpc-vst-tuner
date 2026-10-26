@@ -5,8 +5,7 @@
  * Pitch: YIN (de Cheveigne & Kawahara 2002) on the input decimated 4x to 11025 Hz (covers 27-1378 Hz), then the
  * period refined at 44.1 kHz around what it found, with parabolic interpolation at both stages. A 5-estimate
  * median steadies the note; the needle eases toward the cents.
- * The view: the note, the cents and a needle, in a synthwave palette: a purple sky over a grid floor that scrolls
- * toward the viewer while a note sounds. */
+ * The view: the note, the cents and a needle, in a synthwave palette over a still purple sky and grid floor. */
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,7 +52,6 @@ typedef struct {
     int has, midi;
     float hz, cents, smooth_cents;
     int hold_frames;
-    float grid_phase;
     uint32_t *bg;                    /* the sky and the floor's fixed lines, column-major like the canvas */
     int bgw, bgh;
 } tuner_t;
@@ -140,17 +138,9 @@ static void vspan(scr_canvas_t *c, int x, int y0, int y1, uint32_t col)
     for (int y = y0; y <= y1; y++) p[y] = col;
 }
 
-static void hspan(scr_canvas_t *c, int y, int x0, int x1, uint32_t col)
-{
-    if ((unsigned)y >= (unsigned)c->h) return;
-    if (x0 < 0) x0 = 0;
-    if (x1 >= c->w) x1 = c->w - 1;
-    for (int x = x0; x <= x1; x++) c->px[(size_t)x * c->h + y] = col;
-}
-
 static int horizon(const scr_canvas_t *c) { return c->h * 68 / 100; }
 
-/* Sky gradient, horizon glow and the floor's lines toward the vanishing point: fixed, so drawn once per canvas size. */
+/* Sky gradient, horizon glow and the floor's grid: it never moves, so it's drawn once per canvas size. */
 static int make_bg(tuner_t *d, const scr_canvas_t *c)
 {
     if (d->bg && d->bgw == c->w && d->bgh == c->h) return 1;
@@ -171,6 +161,11 @@ static int make_bg(tuner_t *d, const scr_canvas_t *c)
             if ((unsigned)x < (unsigned)c->w) d->bg[(size_t)x * c->h + y] = col;
         }
     }
+    for (int i = 1; i <= 12; i++) {             /* cross lines, closer together toward the horizon */
+        int y = hz + (c->h - 1 - hz) / i;
+        uint32_t col = mix(C_FLOOR, C_GRID, 0.9f / (float)i + 0.15f);
+        for (int x = 0; x < c->w; x++) d->bg[(size_t)x * c->h + y] = col;
+    }
     for (int x = 0; x < c->w; x++) {
         d->bg[(size_t)x * c->h + hz] = C_PINK;
         if (hz > 0) d->bg[(size_t)x * c->h + hz - 1] = mix(C_SKY_HZN, C_PINK, 0.5f);
@@ -178,25 +173,10 @@ static int make_bg(tuner_t *d, const scr_canvas_t *c)
     return 1;
 }
 
-/* The background, plus the floor's cross lines, which move toward the viewer while a note sounds. */
-static void clear(tuner_t *d, scr_canvas_t *c, int moving)
+static void clear(tuner_t *d, scr_canvas_t *c)
 {
-    if (!make_bg(d, c)) {
-        for (size_t i = 0; i < (size_t)c->w * c->h; i++) c->px[i] = C_FLOOR;
-        return;
-    }
-    memcpy(c->px, d->bg, (size_t)c->w * c->h * sizeof *c->px);
-    if (moving) {
-        d->grid_phase += 0.04f;
-        if (d->grid_phase >= 1) d->grid_phase -= 1;
-    }
-    int hz = horizon(c);
-    for (int i = 0; i < 12; i++) {
-        float z = (float)i + 1.0f - d->grid_phase;
-        if (z < 1) continue;
-        int y = hz + (int)((float)(c->h - 1 - hz) / z);
-        hspan(c, y, 0, c->w - 1, mix(C_FLOOR, C_GRID, 0.9f / z + 0.15f));
-    }
+    if (make_bg(d, c)) memcpy(c->px, d->bg, (size_t)c->w * c->h * sizeof *c->px);
+    else for (size_t i = 0; i < (size_t)c->w * c->h; i++) c->px[i] = C_FLOOR;
 }
 
 /* Text with a cyan copy offset behind it, the scan-line look. */
@@ -280,7 +260,7 @@ static int draw(void *owner, scr_canvas_t *c)
     unsigned w = __atomic_load_n(&d->wpos, __ATOMIC_ACQUIRE);
 
     if (w < NFULL) {
-        clear(d, c, 0);
+        clear(d, c);
         idle(c, "WAITING");
         return 1;
     }
@@ -296,7 +276,7 @@ static int draw(void *owner, scr_canvas_t *c)
     snprintf(lbuf, sizeof lbuf, "IN %.0f DB", rms > 1e-6f ? 20.0 * log10((double)rms) : -120.0);
 
     if (rms < GATE) {
-        clear(d, c, 0);
+        clear(d, c);
         if (d->hold_frames > 0) {
             d->hold_frames--;
             draw_needle(d, c, 1);
@@ -340,7 +320,7 @@ static int draw(void *owner, scr_canvas_t *c)
         d->smooth_cents = d->smooth_cents * 0.7f + cents * 0.3f;
     }
 
-    clear(d, c, d->has);
+    clear(d, c);
     if (d->has) draw_needle(d, c, 0);
     else idle(c, "---");
     sd_text(c, 12, 12, 2, C_TICK, lbuf);

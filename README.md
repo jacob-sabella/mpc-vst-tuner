@@ -46,13 +46,14 @@ then shows "---".
 
 ## Good to know
 
-- Tuner follows one note at a time. A chord reads as the period its notes share, usually a low note: the
-  screenshot above is of the Classic House demo's Rhodes chords, read as C1.
+- Tuner follows one note at a time. A chord reads as the period its notes share, usually a low note
+  (the Classic House demo's Rhodes chords read as C1; its single notes read cleanly, like the A3 above).
 - It reads from 27 Hz to about 1.4 kHz, from a 5-string bass's low B to the 24th fret of a guitar's high E string.
   Offline, every test note lands within 0.4 cents (`tests/pitch_test.c`, 2026-10-26).
 - The pitch detection runs on the drawing thread, never on the audio thread, and only while Tuner's page is on screen.
-- A frame copied while MPC refreshes its own UI can tear for one frame: the scrolling floor lines show it most, split
-  part of the way across (seen on a Key 37, 2026-10-26).
+- A frame copied while MPC refreshes its own UI can tear for one frame. An earlier version's scrolling floor showed it
+  plainly. The background is still now, and with only the needle and text moving no tearing has been seen (Key 37,
+  2026-10-26).
 - With two Tuners in a project, the one inserted last draws (tested offline only).
 
 ## Installing
@@ -62,8 +63,8 @@ There's no release yet. Once there is, it will be in the
 yourself (below) and install it like any other plugin from
 [mpc-vst-plugins](https://github.com/sd88me/mpc-vst-plugins).
 
-Tested on an MPC Key 37 (Gen1) with MPC OS 3.9.1 (2026-10-26; see `tested.json`). The Gen2 build (aarch64) compiles and passes the host
-test under QEMU but hasn't been on a device.
+Tested on an MPC Key 37 (Gen1) with MPC OS 3.9.1 (2026-10-26; see `tested.json`). The Gen2 build (aarch64) compiles,
+but hasn't been tested yet.
 
 ## CPU
 
@@ -73,10 +74,10 @@ thread, not in MPC's audio callback, so this is a share of one CPU core:
 | Input | Drawing thread |
 |---|---|
 | silent, the page open | 7.2% of a core |
-| a note sounding, the page open | 14.3% of a core |
+| the Classic House demo's Rhodes playing, the page open | 9.8% of a core |
 | another page on screen | almost nothing: a few small reads per frame |
 
-A frame takes 1.2 to 2.7 ms to draw and 1.4 to 5.4 ms to copy into MPC's buffer.
+A frame takes 1.2 to 2.0 ms to draw and 1.7 to 1.8 ms to copy into MPC's buffer.
 
 On the audio thread Tuner only copies each block into a buffer. The standard release bench (mpc-vst-plugins'
 `tools/bench.sh`, result in `vst/bench.txt`) gives it a **PASS**: 1.0% of the block budget at p99, 1.9% in the worst
