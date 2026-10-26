@@ -58,13 +58,17 @@ then shows "---".
 
 ## Installing
 
-There's no release yet. Once there is, it will be in the
-[MPC plugin catalog](https://sd88me.github.io/mpc-vst-plugins/) and on this repo's Releases page. Until then, build it
-yourself (below) and install it like any other plugin from
-[mpc-vst-plugins](https://github.com/sd88me/mpc-vst-plugins).
+Download a zip from this repo's Releases page:
 
-Tested on an MPC Key 37 (Gen1) with MPC OS 3.9.1 (2026-10-26; see `tested.json`). The Gen2 build (aarch64) compiles,
-but hasn't been tested yet.
+- `-mpc-armv7.zip` for Gen1: MPC Live and Live II, One, X, Key 61 and Key 37, Force
+- `-mpc-aarch64.zip` for Gen2: Live III, One G2, Key G2
+
+Unzip it and follow its `INSTALL.md`: copy the folder to the device over SSH and run `install.sh` there. You need root
+shell access, and the install restarts MPC (save your project first). Then put Tuner on a track's insert. It isn't in
+the [MPC plugin catalog](https://sd88me.github.io/mpc-vst-plugins/) yet.
+
+Tested: the 0.0.1 Gen1 zip, installed with its own `install.sh` on an MPC Key 37 with MPC OS 3.9.1 (2026-10-26; see
+`tested.json`). The Gen2 zip builds, but hasn't been tested yet.
 
 ## CPU
 
