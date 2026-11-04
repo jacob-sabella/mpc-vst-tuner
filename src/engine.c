@@ -13,6 +13,12 @@
 #include "engine.h"
 #include "screendraw.h"
 #include "sdfont.h"
+#ifdef MPC_DESKTOP   /* the desktop VST3 build (mpc-vst-plugins tools/build_vst3.sh): no MPC screen, so never touch the display */
+#define scr_attach(owner, fn) ((void)(owner), (void)(fn))
+#define scr_detach(owner) ((void)(owner))
+#define scr_set_target(t) ((void)(t))
+#define scr_status(b, n) snprintf(b, n, "NO MPC SCREEN ON THE DESKTOP")
+#endif
 
 #define RING     8192
 #define NFULL    4096
