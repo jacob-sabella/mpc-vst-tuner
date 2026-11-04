@@ -65,7 +65,7 @@ Download a zip from this repo's Releases page:
 
 Unzip it and follow its `INSTALL.md`: copy the folder to the device over SSH and run `install.sh` there. You need root
 shell access, and the install restarts MPC (save your project first). Then put Tuner on a track's insert. It isn't in
-the [MPC plugin catalog](https://sd88me.github.io/mpc-vst-plugins/) yet.
+the [MPC plugin catalog](https://open-mpc.github.io/) yet.
 
 Tested: the 0.0.1 Gen1 zip, installed with its own `install.sh` on an MPC Key 37 with MPC OS 3.9.1 (2026-10-26; see
 `tested.json`). The Gen2 zip builds, but hasn't been tested yet.
@@ -90,7 +90,7 @@ figures above are the ones for drawing.
 
 ## How it's built
 
-- `src/engine.c` is the tuner, an [mpc-vst-plugins](https://github.com/sd88me/mpc-vst-plugins) engine. Each frame it
+- `src/engine.c` is the tuner, an [mpc-vst-plugins](https://github.com/open-mpc/mpc-vst-plugins) engine. Each frame it
   runs YIN (de Cheveigné and Kawahara, 2002) on the last 93 ms of input, decimated to 11025 Hz, then measures the
   period again at 44.1 kHz around what YIN found, takes the median of the last five readings, and draws.
 - `src/screendraw.c` finds the display, the blank area and MPC's UI buffer, runs the drawing thread, and copies each
