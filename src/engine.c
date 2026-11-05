@@ -7,6 +7,7 @@
  * median steadies the note; the needle eases toward the cents.
  * The view: the note, the cents and a needle, in a synthwave palette over a still purple sky and grid floor. */
 #include <math.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,6 +61,9 @@ typedef struct {
     int hold_frames;
     uint32_t *bg;                    /* the sky and the floor's fixed lines, column-major like the canvas */
     int bgw, bgh;
+    pthread_mutex_t draw_mu;         /* one draw at a time: screendraw's thread or the MPC Sample page's */
+    uint32_t *sp_px;                 /* the MPC Sample page: a column-major canvas of its area */
+    int sp_w, sp_h;
 } tuner_t;
 
 /* ---- YIN pitch detection ---- */
@@ -253,11 +257,67 @@ static void draw_needle(tuner_t *d, scr_canvas_t *c, int dim)
     sd_text(c, c->w - 12 - sd_text_width(buf, 2), 12, 2, C_TICK, buf);
 }
 
+/* The same view in a short area (the MPC Sample page: 320 x about 120): the note left, the cents and Hz right, the
+ * scale and needle across the bottom. */
+static int compact(const scr_canvas_t *c) { return c->h < 200; }
+
+static void draw_needle_compact(tuner_t *d, scr_canvas_t *c, int dim)
+{
+    uint32_t cc = dim ? C_DIM : cent_color(d->smooth_cents);
+    char buf[24];
+    note_name(d, buf, sizeof buf);
+    glow_text(c, 14, 4, 6, dim ? C_DIM : C_PINK, dim ? C_SKY_HZN : C_CYAN, buf);
+    snprintf(buf, sizeof buf, "%+d", (int)roundf(d->smooth_cents));
+    glow_text(c, c->w - 14 - sd_text_width(buf, 4), 2, 4, cc, dim ? C_SKY_HZN : C_PURPLE, buf);
+    snprintf(buf, sizeof buf, "%.1f HZ", (double)d->hz);
+    sd_text(c, c->w - 14 - sd_text_width(buf, 1), 38, 1, dim ? C_DIM : C_TICK, buf);
+
+    int gy = 58, gh = c->h - gy - 6, mid = gy + gh / 2;
+    if (gh < 12) return;
+    int gx0 = 16, gx1 = c->w - 16, gcx = (gx0 + gx1) / 2, gw = gx1 - gx0;
+    for (int x = gx0; x <= gx1; x++) {
+        float t = fabsf((float)(x - gcx)) / (float)(gw / 2);
+        uint32_t col = dim ? C_DIM : t < 0.1f ? C_CYAN : mix(C_MAGENTA, C_ORANGE, (t - 0.1f) / 0.9f);
+        vspan(c, x, mid - 1, mid + 1, col);
+    }
+    for (int ct = -50; ct <= 50; ct += 10) {
+        int tx = gcx + ct * gw / 100;
+        int th = ct == 0 ? gh / 2 : (ct % 20 == 0 ? gh / 3 : gh / 5);
+        vspan(c, tx, mid - th, mid + th, dim ? C_DIM : ct == 0 ? C_CYAN : C_TICK);
+        if (ct == 0) vspan(c, tx + 1, mid - th, mid + th, dim ? C_DIM : C_CYAN);
+    }
+    float cl = d->smooth_cents < -50 ? -50 : d->smooth_cents > 50 ? 50 : d->smooth_cents;
+    int nx = gcx + (int)(cl * (float)gw / 100.0f);
+    for (int dx = -6; dx <= 6; dx++) {
+        int a = dx < 0 ? -dx : dx;
+        if (a <= 1) vspan(c, nx + dx, gy - 3, gy + gh + 3, cc);
+        else if ((unsigned)(nx + dx) < (unsigned)c->w)
+            for (int y = gy - 3; y <= gy + gh + 3 && y < c->h; y++) {
+                uint32_t *p = c->px + (size_t)(nx + dx) * c->h + y;
+                *p = mix(*p, cc, 0.5f * (float)(7 - a) / 5.0f);
+            }
+    }
+}
+
 /* ---- main draw callback ---- */
 
 static void idle(scr_canvas_t *c, const char *s)
 {
-    glow_text(c, c->w / 2 - sd_text_width(s, 8) / 2, c->h / 3 - 28, 8, C_DIM, C_SKY_TOP, s);
+    int sc = compact(c) ? 5 : 8;
+    glow_text(c, c->w / 2 - sd_text_width(s, sc) / 2, compact(c) ? c->h / 2 - 20 : c->h / 3 - 28, sc, C_DIM, C_SKY_TOP, s);
+}
+
+static void needle(tuner_t *d, scr_canvas_t *c, int dim)
+{
+    if (compact(c)) draw_needle_compact(d, c, dim);
+    else draw_needle(d, c, dim);
+}
+
+/* the level, top left (top right of the note in the short view, under the ref line in the tall one) */
+static void level(scr_canvas_t *c, uint32_t col, const char *s)
+{
+    if (compact(c)) sd_text(c, c->w - 14 - sd_text_width(s, 1), 48, 1, col, s);
+    else sd_text(c, 12, 12, 2, col, s);
 }
 
 static int draw(void *owner, scr_canvas_t *c)
@@ -285,12 +345,12 @@ static int draw(void *owner, scr_canvas_t *c)
         clear(d, c);
         if (d->hold_frames > 0) {
             d->hold_frames--;
-            draw_needle(d, c, 1);
+            needle(d, c, 1);
         } else {
             d->has = 0;
             idle(c, "---");
         }
-        sd_text(c, 12, 12, 2, C_DIM, lbuf);
+        level(c, C_DIM, lbuf);
         return 1;
     }
 
@@ -327,10 +387,41 @@ static int draw(void *owner, scr_canvas_t *c)
     }
 
     clear(d, c);
-    if (d->has) draw_needle(d, c, 0);
+    if (d->has) needle(d, c, 0);
     else idle(c, "---");
-    sd_text(c, 12, 12, 2, C_TICK, lbuf);
+    level(c, C_TICK, lbuf);
     return 1;
+}
+
+static int draw_locked(void *owner, scr_canvas_t *c)
+{
+    tuner_t *d = owner;
+    if (pthread_mutex_trylock(&d->draw_mu) != 0) return 0;   /* the other drawer has it this frame */
+    int r = draw(owner, c);
+    pthread_mutex_unlock(&d->draw_mu);
+    return r;
+}
+
+/* The MPC Sample page (vst.json "sample_page", mpc-vst-plugins wrapper/sample_page.h): the same view, drawn into a
+ * column-major canvas of the page's free area and copied across. On the page's thread, without the engine lock, as
+ * screendraw's thread draws. */
+int mpc_engine_sample_draw(void *inst, uint32_t *px, int stride, int x, int y, int w, int h)
+{
+    tuner_t *d = inst;
+    if (w <= 0 || h <= 0) return 0;
+    if (!d->sp_px || d->sp_w != w || d->sp_h != h) {
+        free(d->sp_px);
+        d->sp_px = malloc((size_t)w * h * sizeof *d->sp_px);
+        d->sp_w = d->sp_px ? w : 0; d->sp_h = d->sp_px ? h : 0;
+        if (!d->sp_px) return 0;
+    }
+    scr_canvas_t c;
+    memset(&c, 0, sizeof c);
+    c.w = w; c.h = h; c.px = d->sp_px; c.fps = 15;
+    if (!draw_locked(d, &c)) return 0;
+    for (int yy = 0; yy < h; yy++)
+        for (int xx = 0; xx < w; xx++) px[(size_t)(y + yy) * stride + x + xx] = d->sp_px[(size_t)xx * h + yy];
+    return 0;
 }
 
 /* ---- engine ---- */
@@ -341,7 +432,8 @@ static void *create(const char *dir)
     tuner_t *d = calloc(1, sizeof *d);
     if (!d) return NULL;
     d->ref = 440;
-    scr_attach(d, draw);
+    pthread_mutex_init(&d->draw_mu, NULL);
+    scr_attach(d, draw_locked);
     return d;
 }
 
@@ -349,6 +441,8 @@ static void destroy(void *i)
 {
     tuner_t *d = i;
     scr_detach(d);
+    pthread_mutex_destroy(&d->draw_mu);
+    free(d->sp_px);
     free(d->bg);
     free(d);
 }

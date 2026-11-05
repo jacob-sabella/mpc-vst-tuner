@@ -8,7 +8,37 @@
   "layout": "layout.conf",
   "art": "html",
   "effect": true,
-  "targets": ["armv7", "aarch64"],
-  "defines": {"PARAM_TEXT_MAX": 64},
-  "build": {"root": "..", "sources": ["src/engine.c", "src/screendraw.c"], "cflags": ["-Isrc"], "libs": ["-lm", "-lpthread"]}
+  "targets": [
+    "armv7",
+    "aarch64"
+  ],
+  "defines": {
+    "PARAM_TEXT_MAX": 64
+  },
+  "build": {
+    "root": "..",
+    "sources": [
+      "src/engine.c",
+      "src/screendraw.c"
+    ],
+    "cflags": [
+      "-Isrc"
+    ],
+    "libs": [
+      "-lm",
+      "-lpthread"
+    ]
+  },
+  "sample_page": {
+    "banks": [
+      {
+        "name": "TUNER",
+        "knobs": [
+          "ref",
+          "mute"
+        ]
+      }
+    ],
+    "fps": 15
+  }
 }
