@@ -69,9 +69,12 @@ drive (a USB stick, an SD card or the MPC's internal drive). On the MPC, turn on
 Enable Enhancements** and **External Plugin Support**. Tuner then appears under External Plugins; put it on a track's
 insert. No SSH or root access is needed.
 
-**MPC OS 3.9.1.** That firmware doesn't list third-party plugins, so use the `-mpc-armv7.zip` and follow its
-`INSTALL.md`: copy the folder to the device over SSH and run `install.sh` there. That needs root shell access, and the
-install restarts MPC (save your project first).
+**Before MPC OS 3.10.1 (tested on 3.9.1).** That firmware ignores the `VST2 Plugins` folder, so use the per-build zip
+(`-mpc-armv7.zip` for Gen1, `-mpc-aarch64.zip` for Gen2) and follow its `INSTALL.md`: copy the folder to the device over
+SSH and run `install.sh` there. That needs root shell access, and the install restarts MPC (save your project first).
+
+**MPC Sample.** Take the `-mpc-aarch64.zip` and follow its `INSTALL.md`. The Sample has no plugin browser, so Tuner
+loads as an insert in the project (for example with the RACK addin), as tested.
 
 Tested (see `tested.json`):
 
