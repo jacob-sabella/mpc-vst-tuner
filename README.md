@@ -58,17 +58,28 @@ then shows "---".
 
 ## Installing
 
-Download a zip from this repo's Releases page:
+Tuner is in the [MPC plugin catalog](https://open-mpc.github.io/). Or download a zip from this repo's Releases page:
 
+- `-mpc-sdk.zip`: one folder (`<Manufacturer> - VST - Tuner`) with both the Gen1 (armv7) and Gen2 (aarch64) builds, for MPC OS 3.10.1 or later
 - `-mpc-armv7.zip` for Gen1: MPC Live and Live II, One, X, Key 61 and Key 37, Force
-- `-mpc-aarch64.zip` for Gen2: Live III, One G2, Key G2
+- `-mpc-aarch64.zip` for Gen2: Live III, One G2, Key G2, MPC Sample
 
-Unzip it and follow its `INSTALL.md`: copy the folder to the device over SSH and run `install.sh` there. You need root
-shell access, and the install restarts MPC (save your project first). Then put Tuner on a track's insert. It isn't in
-the [MPC plugin catalog](https://open-mpc.github.io/) yet.
+**MPC OS 3.10.1 or later.** Unzip the SDK zip and copy its folder into a folder named `VST2 Plugins` at the root of a
+drive (a USB stick, an SD card or the MPC's internal drive). On the MPC, turn on **Preferences > Enhancements (Beta) >
+Enable Enhancements** and **External Plugin Support**. Tuner then appears under External Plugins; put it on a track's
+insert. No SSH or root access is needed.
 
-Tested: the 0.0.1 Gen1 zip, installed with its own `install.sh` on an MPC Key 37 with MPC OS 3.9.1 (2026-10-26; see
-`tested.json`). The Gen2 zip builds, but hasn't been tested yet.
+**MPC OS 3.9.1.** That firmware doesn't list third-party plugins, so use the `-mpc-armv7.zip` and follow its
+`INSTALL.md`: copy the folder to the device over SSH and run `install.sh` there. That needs root shell access, and the
+install restarts MPC (save your project first).
+
+Tested (see `tested.json`):
+
+- 0.0.1, Gen1 zip with its own `install.sh`: MPC Key 37, MPC OS 3.9.1.2 (2026-10-26)
+- 1.1.1: MPC Key 37, MPC OS 3.10.1.12, from `VST2 Plugins` (2026-11-12)
+- 1.1.1: MPC Sample (aarch64), 1.3.0.12, as a rack insert (2026-11-12)
+
+No Gen2 MPC (Live III, One G2, Key G2) has been tested yet, only the MPC Sample.
 
 ## CPU
 
