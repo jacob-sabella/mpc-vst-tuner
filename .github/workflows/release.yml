@@ -19,12 +19,12 @@ on:
 
 jobs:
   vst:
-    uses: open-mpc/mpc-vst-plugins/.github/workflows/vst-release.yml@f1528a35fbe19ba759957060af6801975977ceca
+    uses: open-mpc/mpc-vst-plugins/.github/workflows/vst-release.yml@ef08816d2b0b58bde9a9a9266b875280fb737220
     permissions: { contents: write }
     with:
       tag: tuner-vst-v${{ inputs.version }}
       version: ${{ inputs.version }}
-      tools_ref: f1528a35fbe19ba759957060af6801975977ceca
+      tools_ref: ef08816d2b0b58bde9a9a9266b875280fb737220
       vst_dir: vst
       build: vst/build.sh
       host_test: tests/run.sh
